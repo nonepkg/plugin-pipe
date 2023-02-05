@@ -1,5 +1,7 @@
+from typing import cast
+
 from nonebot.params import ShellCommandArgs
-from nonebot import get_driver, on_message, on_shell_command
+from nonebot import get_bot, get_driver, on_message, on_shell_command
 from nonebot.adapters.onebot.v12 import Bot, MessageEvent, OneBotV12AdapterException
 
 from .handle import Handle
@@ -23,12 +25,14 @@ async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs())
 async def _(bot: Bot, event: MessageEvent):
     conv = Conv(
         type=event.detail_type,
+        bot_id=bot.self_id,
         **event.dict(include={"user_id", "group_id", "channel_id", "guild_id"}),
     )
     pipes = _config.get_pipe(conv)
     for pipe in pipes:
         for conv in pipe.output:
             try:
+                bot = cast(Bot, get_bot(conv.bot_id))
                 await bot.send_message(
                     detail_type=conv.type,
                     message=event.message,
@@ -37,6 +41,8 @@ async def _(bot: Bot, event: MessageEvent):
                         exclude_none=True,
                     ),
                 )
+            except KeyError:
+                pass
             except OneBotV12AdapterException:
                 pass
 

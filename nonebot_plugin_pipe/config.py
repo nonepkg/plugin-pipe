@@ -9,6 +9,7 @@ from pydantic import BaseModel, parse_obj_as, root_validator
 
 class Conv(BaseModel):
     type: str
+    bot_id: str
     user_id: Optional[str]
     group_id: Optional[str]
     channel_id: Optional[str]

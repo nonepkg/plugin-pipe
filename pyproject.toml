@@ -1,5 +1,5 @@
 [project]
-name = "nonebot-plugin-tty"
+name = "nonebot-plugin-pipe"
 version = "0.1.0"
 description = ""
 authors = [

@@ -30,6 +30,26 @@ class Pipe(BaseModel):
     output: List[Conv]
     filter: str  # TODO
 
+    def link_conv(self, conv: Conv, input: bool = False, output: bool = False) -> bool:
+        if input == output:
+            self.input.append(conv)
+            self.output.append(conv)
+            return True
+        if input:
+            self.input.append(conv)
+        if output:
+            self.output.append(conv)
+        return True
+
+    def unlink_conv(self, conv: Conv) -> bool:
+        for c in self.input:
+            if c == conv:
+                self.input.remove(c)
+        for c in self.output:
+            if c == conv:
+                self.output.remove(c)
+        return True
+
 
 class Config:
     _path: Path
@@ -42,6 +62,33 @@ class Config:
     def get_pipe(self, conv: Conv) -> List[Pipe]:
         return [pipe for pipe in self._pipes if conv in pipe.input]
 
+    def add_pipe(self, name: str) -> bool:
+        if name in (pipe.name for pipe in self._pipes):
+            return False
+        self._pipes.append(Pipe(name=name, input=[], output=[], filter=""))
+        return True
+
+    def remove_pipe(self, name: str) -> bool:
+        for pipe in self._pipes:
+            if pipe.name == name:
+                self._pipes.remove(pipe)
+                return True
+        return False
+
+    def link_conv(
+        self, name: str, conv: Conv, input: bool = False, output: bool = False
+    ) -> bool:
+        for pipe in self._pipes:
+            if pipe.name == name:
+                return pipe.link_conv(conv, input, output)
+        return False
+
+    def unlink_conv(self, name: str, conv: Conv) -> bool:
+        for pipe in self._pipes:
+            if pipe.name == name:
+                return pipe.unlink_conv(conv)
+        return False
+
     async def _load(self):
         try:
             async with await open_file(self._path, "r") as f:
@@ -52,7 +99,17 @@ class Config:
     async def _dump(self):
         self._path.parent.mkdir(parents=True, exist_ok=True)
         async with await open_file(self._path, "w") as f:
-            await f.write(dumps(self._pipes, indent=4, default=pydantic_encoder))
+            await f.write(
+                dumps(
+                    self._pipes,
+                    indent=4,
+                    default=(
+                        lambda o: o.dict(exclude_none=True)
+                        if isinstance(o, BaseModel)
+                        else pydantic_encoder(o)
+                    ),
+                )
+            )
 
 
 _config = Config()

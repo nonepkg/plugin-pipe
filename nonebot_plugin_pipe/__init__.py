@@ -1,24 +1,29 @@
 from typing import cast
+from argparse import Namespace
 
+from nonebot.permission import SUPERUSER
 from nonebot.params import ShellCommandArgs
 from nonebot import get_bot, get_driver, on_message, on_shell_command
 from nonebot.adapters.onebot.v12 import Bot, MessageEvent, OneBotV12AdapterException
 
 from .handle import Handle
+from .parser import parser
 from .config import Conv, _config
-from .parser import Namespace, parser
 
-command = on_shell_command("pipe", parser=parser, priority=1)
+command = on_shell_command("pipe", parser=parser, permission=SUPERUSER, priority=1)
 message = on_message(priority=10, block=False)
 
 
 @command.handle()
 async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs()):
+    args.conv = Conv(
+        type=event.detail_type,
+        bot_id=bot.self_id,
+        **event.dict(include={"user_id", "group_id", "channel_id", "guild_id"}),
+    )
     if hasattr(args, "handle"):
-        args = getattr(Handle, args.handle)(args)
-        await bot.send(event, args.message)
-    else:
-        await bot.send(event, args.message)
+        getattr(Handle, args.handle)(args)
+    await bot.send(event, args.message)
 
 
 @message.handle()
@@ -30,13 +35,15 @@ async def _(bot: Bot, event: MessageEvent):
     )
     pipes = _config.get_pipe(conv)
     for pipe in pipes:
-        for conv in pipe.output:
+        for c in pipe.output:
+            if c == conv:
+                continue
             try:
-                bot = cast(Bot, get_bot(conv.bot_id))
+                bot = cast(Bot, get_bot(c.bot_id))
                 await bot.send_message(
-                    detail_type=conv.type,
+                    detail_type=c.type,
                     message=event.message,
-                    **conv.dict(
+                    **c.dict(
                         include={"user_id", "group_id", "channel_id", "guild_id"},
                         exclude_none=True,
                     ),

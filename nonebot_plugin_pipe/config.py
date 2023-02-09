@@ -17,7 +17,10 @@ class Conv(BaseModel):
 
     @root_validator
     def _(cls, values):
-        if values.get("type") == "group":
+        if values.get("type") == "channel":
+            values["user_id"] = None
+            values["group_id"] = None
+        elif values.get("type") == "group":
             values["user_id"] = None
         elif values.get("type") == "private":
             values["group_id"] = None

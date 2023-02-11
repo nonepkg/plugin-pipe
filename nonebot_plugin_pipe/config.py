@@ -15,6 +15,12 @@ class Conv(BaseModel):
     channel_id: Optional[str]
     guild_id: Optional[str]
 
+    def __str__(self) -> str:
+        if self.type == "channel":
+            return f"{self.bot_id}_{self.type}_{self.guild_id}_{self.channel_id}"
+        else:
+            return f"{self.bot_id}_{self.type}_{self.group_id or self.user_id}"
+
     @root_validator
     def _(cls, values):
         if values.get("type") == "channel":

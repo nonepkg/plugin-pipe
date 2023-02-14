@@ -9,6 +9,7 @@ from nonebot.adapters.onebot.v12 import Bot, MessageEvent, OneBotV12AdapterExcep
 from .handle import Handle
 from .parser import parser
 from .config import Conv, _config
+from .filter import default_filter
 
 command = on_shell_command("pipe", parser=parser, permission=SUPERUSER, priority=1)
 message = on_message(priority=10, block=False)
@@ -39,10 +40,11 @@ async def _(bot: Bot, event: MessageEvent):
             if c == conv:
                 continue
             try:
+                message = await default_filter(bot, event)
                 bot = cast(Bot, get_bot(c.bot_id))
                 await bot.send_message(
                     detail_type=c.type,
-                    message=event.message,
+                    message=message,
                     **c.dict(
                         include={"user_id", "group_id", "channel_id", "guild_id"},
                         exclude_none=True,

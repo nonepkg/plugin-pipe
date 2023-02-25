@@ -7,4 +7,6 @@ async def default_filter(bot: Bot, event: MessageEvent) -> Message:
     for message in event.message:
         if message.type == "text":
             message_out += message
+        if message.type == "image":
+            message_out += message
     return message_out

@@ -1,12 +1,19 @@
-from nonebot.adapters.onebot.v12 import Bot, Message, MessageEvent
+from nonebot.adapters.onebot.v12 import Bot, Message, MessageEvent, MessageSegment
+from .database import get_message
 
 
-async def default_filter(bot: Bot, event: MessageEvent) -> Message:
+async def default_filter(bot: Bot, event: MessageEvent, bot_out: Bot) -> Message:
     user_info = await bot.get_user_info(user_id=event.user_id)
     message_out = Message(f'{user_info["user_displayname"] or user_info["user_name"]}：')
-    for message in event.message:
-        if message.type == "text":
-            message_out += message
-        if message.type == "image":
-            message_out += message
+    for segment in event.message:
+        if segment.type == "text":
+            message_out += segment
+        if segment.type == "image":
+            message_out += segment
+    if event.reply and (
+        message := await get_message(bot_out.platform, event.reply.message_id)
+    ):
+        message_out = (
+            MessageSegment.reply(message.src_id, user_id=message.user_id) + message_out
+        )
     return message_out

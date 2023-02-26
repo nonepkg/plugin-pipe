@@ -5,6 +5,7 @@ from typing import List, Optional
 from anyio import open_file
 from pydantic.json import pydantic_encoder
 from pydantic import BaseModel, parse_obj_as, root_validator
+from nonebot_plugin_datastore import get_plugin_data
 
 
 class Conv(BaseModel):
@@ -31,6 +32,9 @@ class Conv(BaseModel):
         elif values.get("type") == "private":
             values["group_id"] = None
         return values
+
+
+CONFIG_PATH = get_plugin_data().config_dir
 
 
 class Pipe(BaseModel):
@@ -64,8 +68,8 @@ class Config:
     _path: Path
     _pipes: List[Pipe]
 
-    def __init__(self, path: Path = Path() / "data" / "pipe" / "config.json"):
-        self._path = path
+    def __init__(self):
+        self._path = CONFIG_PATH / "pipe.json"
         self._pipes = []
 
     def get_pipe(self, conv: Conv) -> List[Pipe]:

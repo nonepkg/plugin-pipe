@@ -10,6 +10,7 @@ from .handle import Handle
 from .parser import parser
 from .config import Conv, _config
 from .filter import default_filter
+from .database import add_message
 
 command = on_shell_command("pipe", parser=parser, permission=SUPERUSER, priority=1)
 message = on_message(priority=10, block=False)
@@ -23,12 +24,13 @@ async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs())
         **event.dict(include={"user_id", "group_id", "channel_id", "guild_id"}),
     )
     if hasattr(args, "handle"):
-        getattr(Handle, args.handle)(args)
+        await getattr(Handle, args.handle)(args)
     await bot.send(event, args.message)
 
 
 @message.handle()
 async def _(bot: Bot, event: MessageEvent):
+    message_id = await add_message(bot.platform, event.message_id, event.user_id)
     conv = Conv(
         type=event.detail_type,
         bot_id=bot.self_id,
@@ -40,15 +42,27 @@ async def _(bot: Bot, event: MessageEvent):
             if c == conv:
                 continue
             try:
-                message = await default_filter(bot, event)
-                bot = cast(Bot, get_bot(c.bot_id))
-                await bot.send_message(
-                    detail_type=c.type,
-                    message=message,
-                    **c.dict(
-                        include={"user_id", "group_id", "channel_id", "guild_id"},
-                        exclude_none=True,
-                    ),
+                bot_out = cast(Bot, get_bot(c.bot_id))
+                message = await default_filter(bot, event, bot_out)
+                await add_message(
+                    bot_out.platform,
+                    (
+                        await bot_out.send_message(
+                            detail_type=c.type,
+                            message=message,
+                            **c.dict(
+                                include={
+                                    "user_id",
+                                    "group_id",
+                                    "channel_id",
+                                    "guild_id",
+                                },
+                                exclude_none=True,
+                            ),
+                        )
+                    )["message_id"],
+                    bot_out.self_id,
+                    message_id,
                 )
             except KeyError:
                 pass
@@ -62,8 +76,3 @@ driver = get_driver()
 @driver.on_startup
 async def _():
     await _config._load()
-
-
-@driver.on_shutdown
-async def _():
-    await _config._dump()

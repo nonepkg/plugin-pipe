@@ -9,8 +9,8 @@ from nonebot.adapters.onebot.v12 import Bot, MessageEvent, OneBotV12AdapterExcep
 from .handle import Handle
 from .parser import parser
 from .config import Conv, _config
-from .filter import default_filter
 from .database import add_message
+from .filter import default_filter
 
 command = on_shell_command("pipe", parser=parser, permission=SUPERUSER, priority=1)
 message = on_message(priority=10, block=False)
@@ -30,12 +30,12 @@ async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs())
 
 @message.handle()
 async def _(bot: Bot, event: MessageEvent):
-    message_id = await add_message(bot.platform, event.message_id, event.user_id)
     conv = Conv(
         type=event.detail_type,
         bot_id=bot.self_id,
         **event.dict(include={"user_id", "group_id", "channel_id", "guild_id"}),
     )
+    message_id = await add_message(str(conv), event.message_id, event.user_id)
     pipes = _config.get_pipe(conv)
     for pipe in pipes:
         for c in pipe.output:
@@ -43,9 +43,9 @@ async def _(bot: Bot, event: MessageEvent):
                 continue
             try:
                 bot_out = cast(Bot, get_bot(c.bot_id))
-                message = await default_filter(bot, event, bot_out)
+                message = await default_filter(conv, bot, event)
                 await add_message(
-                    bot_out.platform,
+                    str(c),
                     (
                         await bot_out.send_message(
                             detail_type=c.type,

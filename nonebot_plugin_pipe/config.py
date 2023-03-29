@@ -4,8 +4,8 @@ from typing import List, Optional
 
 from anyio import open_file
 from pydantic.json import pydantic_encoder
-from pydantic import BaseModel, parse_obj_as, root_validator
 from nonebot_plugin_datastore import get_plugin_data
+from pydantic import BaseModel, parse_obj_as, root_validator
 
 
 class Conv(BaseModel):

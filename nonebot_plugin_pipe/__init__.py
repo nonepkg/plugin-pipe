@@ -43,7 +43,7 @@ async def _(bot: Bot, event: MessageEvent):
                 continue
             try:
                 bot_out = cast(Bot, get_bot(c.bot_id))
-                message = await default_filter(conv, bot, event)
+                message = await default_filter(c, bot, event)
                 await add_message(
                     str(c),
                     (

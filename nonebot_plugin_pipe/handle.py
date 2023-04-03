@@ -13,7 +13,7 @@ class Handle:
 
     @staticmethod
     async def delete(args: Namespace):
-        if  _config.remove_pipe(args.pipe):
+        if _config.remove_pipe(args.pipe):
             await _config._dump()
             args.message = f"删除管道「{args.pipe}」成功"
         else:

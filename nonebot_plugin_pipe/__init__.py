@@ -3,14 +3,27 @@ from argparse import Namespace
 
 from nonebot.permission import SUPERUSER
 from nonebot.params import ShellCommandArgs
+from nonebot.plugin import PluginMetadata, require
 from nonebot import get_bot, get_driver, on_message, on_shell_command
 from nonebot.adapters.onebot.v12 import Bot, MessageEvent, OneBotV12AdapterException
+
+require("nonebot_plugin_datastore")
 
 from .handle import Handle
 from .parser import parser
 from .config import Conv, _config
 from .database import add_message
 from .filter import default_filter
+
+__plugin_meta__ = PluginMetadata(
+    name="会话转接",
+    description="在 OneBot V12 会话间转发消息",
+    usage="""看 README""",
+    type="application",
+    homepage="https://github.com/nonepkg/plugin-pipe",
+    supported_adapters={"~onebot.v12"},
+)
+
 
 command = on_shell_command("pipe", parser=parser, permission=SUPERUSER, priority=1)
 message = on_message(priority=10, block=False)

@@ -117,9 +117,11 @@ class Config:
                     self._pipes,
                     indent=4,
                     default=(
-                        lambda o: o.dict(exclude_none=True)
-                        if isinstance(o, BaseModel)
-                        else pydantic_encoder(o)
+                        lambda o: (
+                            o.dict(exclude_none=True)
+                            if isinstance(o, BaseModel)
+                            else pydantic_encoder(o)
+                        )
                     ),
                 )
             )

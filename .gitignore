@@ -3,6 +3,8 @@ data
 bot.py
 .env
 
+.direnv
+
 .vscode
 
 # Created by https://www.toptal.com/developers/gitignore/api/python

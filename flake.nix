@@ -1,0 +1,31 @@
+{
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/24.05";
+  };
+
+  outputs =
+    inputs @ { self
+    , nixpkgs
+    , ...
+    }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+      };
+    in
+    {
+      devShells.${system} = {
+        default = pkgs.mkShell {
+          NIX_LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+            pkgs.stdenv.cc.cc
+          ];
+          NIX_LD = pkgs.lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+          shellHook = ''
+            export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
+          ''
+          ;
+        };
+      };
+    };
+}

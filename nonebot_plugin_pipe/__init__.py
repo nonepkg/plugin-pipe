@@ -7,7 +7,8 @@ from nonebot.plugin import PluginMetadata, require
 from nonebot import get_bot, get_driver, on_message, on_shell_command
 from nonebot.adapters.onebot.v12 import Bot, MessageEvent, OneBotV12AdapterException
 
-require("nonebot_plugin_datastore")
+require("nonebot_plugin_localstore")
+require("nonebot_plugin_orm")
 
 from .handle import Handle
 from .parser import parser

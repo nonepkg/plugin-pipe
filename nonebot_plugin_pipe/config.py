@@ -1,10 +1,10 @@
 from pathlib import Path
+from typing import Optional
 from json import dumps, loads
-from typing import List, Optional
 
 from anyio import open_file
 from pydantic.json import pydantic_encoder
-from nonebot_plugin_datastore import get_plugin_data
+from nonebot_plugin_localstore import get_config_dir
 from pydantic import BaseModel, parse_obj_as, root_validator
 
 
@@ -34,13 +34,13 @@ class Conv(BaseModel):
         return values
 
 
-CONFIG_PATH = get_plugin_data().config_dir
+CONFIG_PATH = get_config_dir(None)
 
 
 class Pipe(BaseModel):
     name: str
-    input: List[Conv]
-    output: List[Conv]
+    input: list[Conv]
+    output: list[Conv]
     filter: str  # TODO
 
     def link_conv(self, conv: Conv, input: bool = False, output: bool = False) -> bool:
@@ -66,13 +66,13 @@ class Pipe(BaseModel):
 
 class Config:
     _path: Path
-    _pipes: List[Pipe]
+    _pipes: list[Pipe]
 
     def __init__(self):
         self._path = CONFIG_PATH / "pipe.json"
         self._pipes = []
 
-    def get_pipe(self, conv: Conv) -> List[Pipe]:
+    def get_pipe(self, conv: Conv) -> list[Pipe]:
         return [pipe for pipe in self._pipes if conv in pipe.input]
 
     def add_pipe(self, name: str) -> bool:
@@ -105,7 +105,7 @@ class Config:
     async def _load(self):
         try:
             async with await open_file(self._path, "r") as f:
-                self._pipes = parse_obj_as(List[Pipe], loads(await f.read()))
+                self._pipes = parse_obj_as(list[Pipe], loads(await f.read()))
         except FileNotFoundError:
             pass
 

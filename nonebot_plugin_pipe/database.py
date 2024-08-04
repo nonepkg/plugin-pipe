@@ -3,10 +3,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Uuid, select
 from sqlalchemy.orm import Mapped, mapped_column
-from nonebot_plugin_datastore import create_session, get_plugin_data
-
-plugin_data = get_plugin_data()
-Model = plugin_data.Model
+from nonebot_plugin_orm import Model, get_session
 
 
 class Message(Model):
@@ -14,11 +11,11 @@ class Message(Model):
     message_id: Mapped[UUID] = mapped_column(Uuid, default=uuid4)
     src: Mapped[str]
     src_id: Mapped[str]
-    user_id: Mapped[Optional[str]]
+    user_id: Mapped[str]
 
 
 async def get_message(src: str, src_id: str) -> Optional[Message]:
-    async with create_session() as session:
+    async with get_session() as session:
         message = (
             await session.scalars(
                 select(Message).where(
@@ -40,7 +37,7 @@ async def add_message(
     user_id: Optional[str] = None,
     message_id: Optional[str] = None,
 ) -> str:
-    async with create_session() as session:
+    async with get_session() as session:
         message = (
             await session.scalars(
                 select(Message).where(Message.src_id == src_id, Message.src == src)

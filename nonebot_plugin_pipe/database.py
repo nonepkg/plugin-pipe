@@ -1,9 +1,11 @@
 from typing import Optional
 from uuid import UUID, uuid4
+from collections.abc import Sequence
 
 from sqlalchemy import Uuid, select
 from sqlalchemy.orm import Mapped, mapped_column
 from nonebot_plugin_orm import Model, get_session
+from nonebot_plugin_user.models import Bind, User
 
 
 class Message(Model):
@@ -52,3 +54,41 @@ async def add_message(
         await session.commit()
         await session.refresh(message)
         return message.message_id.hex
+
+
+async def get_user_binds_by_name_or_platform_id(name: str) -> Sequence[Bind]:
+    async with get_session() as db_session:
+        binds = (
+            await db_session.scalars(
+                select(Bind)
+                .where(User.name == name)
+                .join(User, User.id == Bind.bind_id)
+            )
+        ).all()
+    if not binds and "-" in name:
+        platform, platform_id = name.split("-", 1)
+        binds = (
+            await db_session.scalars(
+                select(Bind)
+                .where(Bind.platform_id == platform_id)
+                .where(Bind.platform == platform)
+            )
+        ).all()
+    return binds
+
+
+async def get_user_binds(platform: str, platform_id: int) -> Sequence[Bind]:
+    async with get_session() as db_session:
+        binds = (
+            await db_session.scalars(
+                select(Bind).where(
+                    Bind.bind_id
+                    == select(User.id)
+                    .where(Bind.platform == platform)
+                    .where(Bind.platform_id == platform_id)
+                    .join(Bind, User.id == Bind.bind_id)
+                    .scalar_subquery()
+                )
+            )
+        ).all()
+    return binds

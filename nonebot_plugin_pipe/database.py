@@ -57,9 +57,9 @@ async def add_message(
 
 
 async def get_user_binds_by_name_or_platform_id(name: str) -> Sequence[Bind]:
-    async with get_session() as db_session:
+    async with get_session() as session:
         binds = (
-            await db_session.scalars(
+            await session.scalars(
                 select(Bind)
                 .where(User.name == name)
                 .join(User, User.id == Bind.bind_id)
@@ -68,7 +68,7 @@ async def get_user_binds_by_name_or_platform_id(name: str) -> Sequence[Bind]:
     if not binds and "-" in name:
         platform, platform_id = name.split("-", 1)
         binds = (
-            await db_session.scalars(
+            await session.scalars(
                 select(Bind)
                 .where(Bind.platform_id == platform_id)
                 .where(Bind.platform == platform)
@@ -78,9 +78,9 @@ async def get_user_binds_by_name_or_platform_id(name: str) -> Sequence[Bind]:
 
 
 async def get_user_binds(platform: str, platform_id: int) -> Sequence[Bind]:
-    async with get_session() as db_session:
+    async with get_session() as session:
         binds = (
-            await db_session.scalars(
+            await session.scalars(
                 select(Bind).where(
                     Bind.bind_id
                     == select(User.id)

@@ -84,8 +84,8 @@ async def send_to_pipes(
                         exclude_none=True,
                     ),
                 )
-            except OneBotV12AdapterException:
-                logger.error(f"Failed to send message to {c}")
+            except OneBotV12AdapterException as e:
+                logger.opt(exception=e).error(f"Failed to send message to {c}")
                 continue
             await add_message(
                 str(c),

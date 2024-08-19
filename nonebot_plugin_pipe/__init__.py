@@ -17,6 +17,7 @@ from nonebot.adapters.onebot.v12 import (
 require("nonebot_plugin_localstore")
 require("nonebot_plugin_orm")
 require("nonebot_plugin_user")
+require("nonebot_plugin_htmlrender")
 
 
 from .handle import Handle
